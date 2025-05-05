@@ -1,8 +1,11 @@
-﻿using HuachinDevHabit.Api.Database;
+﻿using FluentValidation;
+using FluentValidation.Results;
+using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Tags;
 using HuachinDevHabit.Api.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace HuachinDevHabit.Api.Controllers
@@ -50,13 +53,34 @@ namespace HuachinDevHabit.Api.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<TagDto>> CreateTag([FromBody] CreateTagDto createTagDto)
+		public async Task<ActionResult<TagDto>> CreateTag(
+			[FromBody] CreateTagDto createTagDto, 
+			IValidator<CreateTagDto> validator,
+			ProblemDetailsFactory problemDetailsFactory)
 		{
+			ValidationResult validationResult = await validator.ValidateAsync(createTagDto);
+
+			if (!validationResult.IsValid)
+			{
+				//return BadRequest(validationResult.ToDictionary());
+				//return ValidationProblem(new ValidationProblemDetails(validationResult.ToDictionary()));
+
+				ProblemDetails problem = problemDetailsFactory.CreateProblemDetails(
+					HttpContext,
+					StatusCodes.Status400BadRequest);
+				problem.Extensions.Add("errors", validationResult.ToDictionary());
+
+				return BadRequest(problem);
+			}
+
 			Tag tag = createTagDto.ToEntity();
 
 			if (await _dbContext.Tags.AnyAsync(t => t.Name == tag.Name))
 			{
-				return Conflict($"The tag '{tag.Name}' already exists.");
+				//return Conflict($"The tag '{tag.Name}' already exists.");
+				return Problem(
+					detail: $"The tag '{tag.Name}' already exists.",
+					statusCode: StatusCodes.Status409Conflict);
 			}
 
 			_dbContext.Tags.Add(tag);

@@ -1,5 +1,7 @@
+using FluentValidation;
 using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.Extensions;
+using HuachinDevHabit.Api.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
@@ -19,6 +21,22 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+#region FluentValidation
+//builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+#endregion
+
+builder.Services.AddProblemDetails(options =>
+{
+	options.CustomizeProblemDetails = context =>
+	{
+		context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+	};
+});
+
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 #region Entity Framework Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -63,6 +81,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseExceptionHandler();
 
 app.MapControllers();
 

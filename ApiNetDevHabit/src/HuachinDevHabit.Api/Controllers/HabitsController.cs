@@ -1,4 +1,6 @@
-﻿using HuachinDevHabit.Api.Database;
+﻿using FluentValidation;
+using FluentValidation.Results;
+using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
 using Microsoft.AspNetCore.JsonPatch;
@@ -50,8 +52,21 @@ namespace HuachinDevHabit.Api.Controllers
 		}		
 
 		[HttpPost]
-		public async Task<ActionResult<HabitDto>> CreateHabit([FromBody] CreateHabitDto createHabitDto)
+		public async Task<ActionResult<HabitDto>> CreateHabit(
+			[FromBody] CreateHabitDto createHabitDto,
+			IValidator<CreateHabitDto> validator)
 		{
+			#region Fluent Validation
+			//ValidationResult validationResult = await validator.ValidateAsync(createHabitDto);
+
+			//if (!validationResult.IsValid)
+			//{
+			//	return BadRequest(validationResult.ToDictionary());
+			//}
+
+			await validator.ValidateAndThrowAsync(createHabitDto);
+			#endregion
+
 			Habit habit = createHabitDto.ToEntity();
 			
 			_dbContext.Habits.Add(habit);
