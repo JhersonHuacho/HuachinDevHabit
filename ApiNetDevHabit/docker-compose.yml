@@ -15,6 +15,17 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://devhabit.aspire-dashboard:18889
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 
+  huachindevhabit.postgres:
+     image: postgres:17.2 # or latest
+     environment:
+       POSTGRES_USER: devhabit
+       POSTGRES_PASSWORD: postgres
+       POSTGRES_DB: postgres
+     volumes:
+       - ./.containers/postgres_data:/var/lib/postgresql/data
+     ports:
+       - 5432:5432
+
   huachindevhabit.seq:
     image: datalust/seq:2024.3 # or latest
     environment:
