@@ -2,13 +2,14 @@
 
 namespace HuachinDevHabit.Api.DTOs.Common
 {
-	public sealed record PaginationResult<T> : ICollectionResponse<T>
+	public sealed record PaginationResult<T> : ICollectionResponse<T>, ILinkResponse
 	{
 		public List<T> Items { get; init; }
 		public int Page { get; init; }
 		public int PageSize { get; init; }
 		public int TotalCount { get; init; }
 		public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+		public List<LinkDto> Links { get; set; }
 		public bool HasPreviousPage => Page > 1;
 		public bool HasNextPage => Page < TotalPages;
 		public static async Task<PaginationResult<T>> CreateAsync(

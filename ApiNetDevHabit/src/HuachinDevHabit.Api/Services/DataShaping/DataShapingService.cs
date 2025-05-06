@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using HuachinDevHabit.Api.DTOs.Common;
+using System.Collections.Concurrent;
 using System.Dynamic;
 using System.Reflection;
 
@@ -35,7 +36,10 @@ namespace HuachinDevHabit.Api.Services.DataShaping
 
 			return (ExpandoObject)shapedObject;
 		}
-		public List<ExpandoObject> ShapeCollectionData<T>(IEnumerable<T> entities, string? fields)
+		public List<ExpandoObject> ShapeCollectionData<T>(
+			IEnumerable<T> entities, 
+			string? fields, Func<T, 
+			List<LinkDto>>? linksFactory = null)
 		{
 			HashSet<string> fieldsSet = fields?
 				.Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -63,6 +67,11 @@ namespace HuachinDevHabit.Api.Services.DataShaping
 				foreach (PropertyInfo propertyInfo in propertyInfos)
 				{
 					shapedObject[propertyInfo.Name] = propertyInfo.GetValue(entity);
+				}
+
+				if (linksFactory != null)
+				{
+					shapedObject["Links"] = linksFactory(entity);
 				}
 
 				shapedObjects.Add((ExpandoObject)shapedObject);

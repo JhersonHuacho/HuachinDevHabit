@@ -12,6 +12,10 @@ using HuachinDevHabit.Api.Services.Sorting;
 using HuachinDevHabit.Api.DTOs.Common;
 using HuachinDevHabit.Api.Services.DataShaping;
 using System.Dynamic;
+using HuachinDevHabit.Api.Services.Hateos;
+using Microsoft.AspNetCore.HttpLogging;
+using HuachinDevHabit.Api.Services.ContentNegotiation;
+using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers
 {
@@ -20,13 +24,16 @@ namespace HuachinDevHabit.Api.Controllers
 	public sealed class HabitsController : ControllerBase
 	{
 		private readonly ApplicationDbContext _dbContext;
+		private readonly LinkService _linkService;
 
-		public HabitsController(ApplicationDbContext dbContext)
+		public HabitsController(ApplicationDbContext dbContext, LinkService linkService)
 		{
 			_dbContext = dbContext;
+			_linkService = linkService;
 		}
 
 		[HttpGet()]
+		[Produces(MediaTypeNames.Application.Json, CustomMediaTypeNames.Application.HateosJson)]
 		public async Task<IActionResult> GetHabits(
 			[FromQuery] HabitsQueryParameters queryParameters,
 			SortMappingProvider sortMappingProvider,
@@ -66,15 +73,28 @@ namespace HuachinDevHabit.Api.Controllers
 				.Take(queryParameters.PageSize)
 				.ToListAsync();
 
+			bool includeLinks = queryParameters.AcceptHeader == CustomMediaTypeNames.Application.HateosJson;
+
 			//var paginationResult = new PaginationResult<HabitDto>
 			var paginationResult = new PaginationResult<ExpandoObject>
 			{
 				//Items = habits,
-				Items = dataShapingService.ShapeCollectionData(habits, queryParameters.Fields),
+				Items = dataShapingService.ShapeCollectionData(
+					habits, 
+					queryParameters.Fields,
+					includeLinks ? h => CreateLinksForHabit(h.Id, queryParameters.Fields) : null),
 				Page = queryParameters.Page,
 				PageSize = queryParameters.PageSize,
 				TotalCount = totalCount
 			};
+
+			if (includeLinks)
+			{
+				paginationResult.Links = CreateLinksForHabit(
+					queryParameters,
+					paginationResult.HasNextPage,
+					paginationResult.HasPreviousPage);
+			}			
 
 			return Ok(paginationResult);
 		}
@@ -122,6 +142,7 @@ namespace HuachinDevHabit.Api.Controllers
 		public async Task<IActionResult> GetHabit(
 			string id,
 			string? fields,
+			[FromHeader(Name = "Accept")] string? acceptHeader,
 			DataShapingService dataShapingService)
 		{
 			if (!dataShapingService.Validate<HabitWithTagsDto>(fields))
@@ -144,8 +165,14 @@ namespace HuachinDevHabit.Api.Controllers
 
 			ExpandoObject shapedHabitDto = dataShapingService.ShapeData(habit, fields);
 
+			if (acceptHeader == CustomMediaTypeNames.Application.HateosJson)
+			{
+				List<LinkDto> links = CreateLinksForHabit(id, fields);
+				shapedHabitDto.TryAdd("links", links);
+			}			
+
 			return Ok(shapedHabitDto);
-		}
+		}	
 
 		[HttpPost]
 		public async Task<ActionResult<HabitDto>> CreateHabit(
@@ -169,6 +196,7 @@ namespace HuachinDevHabit.Api.Controllers
 			await _dbContext.SaveChangesAsync();
 
 			HabitDto habitDto = habit.ToDto();
+			habitDto.Links = CreateLinksForHabit(habitDto.Id, null);
 
 			return CreatedAtAction(nameof(GetHabit), new { id = habitDto.Id }, habitDto);
 		}
@@ -248,6 +276,69 @@ namespace HuachinDevHabit.Api.Controllers
 			await _dbContext.SaveChangesAsync();
 			
 			return NoContent();
+		}
+		private List<LinkDto> CreateLinksForHabit(
+			HabitsQueryParameters queryParameters,
+			bool hasNextPage,
+			bool hasPreviousPage)
+		{
+			List<LinkDto> links =
+			[
+				_linkService.Create(nameof(GetHabits), "self", HttpMethods.Get, new 
+				{
+					page = queryParameters.Page,
+					pageSize = queryParameters.PageSize,
+					fields = queryParameters.Fields,
+					q = queryParameters.Search,
+					sort = queryParameters.Sort,
+					type = queryParameters.Type,
+					status = queryParameters.Status
+				}),
+				_linkService.Create(nameof(CreateHabit), "create", HttpMethods.Post)
+			];
+
+			if (hasNextPage)
+			{
+				links.Add(_linkService.Create(nameof(GetHabits), "next-page", HttpMethods.Get, new
+				{
+					page = queryParameters.Page + 1,
+					pageSize = queryParameters.PageSize,
+					fields = queryParameters.Fields,
+					q = queryParameters.Search,
+					sort = queryParameters.Sort,
+					type = queryParameters.Type,
+					status = queryParameters.Status
+				}));
+			}
+
+			if (hasPreviousPage)
+			{
+				links.Add(_linkService.Create(nameof(GetHabits), "previous-page", HttpMethods.Get, new
+				{
+					page = queryParameters.Page - 1,
+					pageSize = queryParameters.PageSize,
+					fields = queryParameters.Fields,
+					q = queryParameters.Search,
+					sort = queryParameters.Sort,
+					type = queryParameters.Type,
+					status = queryParameters.Status
+				}));
+			}
+
+			return links;
+		}
+		private List<LinkDto> CreateLinksForHabit(string id, string? fields)
+		{
+			List<LinkDto> links =
+			[
+				_linkService.Create(nameof(GetHabit), "self", HttpMethods.Get, new { id, fields }),
+				_linkService.Create(nameof(UpdateHabit), "update", HttpMethods.Put, new { id }),
+				_linkService.Create(nameof(PatchHabit), "partial-update", HttpMethods.Patch, new { id }),
+				_linkService.Create(nameof(DeleteHabit), "delete", HttpMethods.Delete, new { id }),
+				_linkService.Create(nameof(HabitTagsController.UpsertHabitTags), "upsert-tags", HttpMethods.Put, new { habitId = id }, HabitTagsController.Name),
+			];
+
+			return links;
 		}
 	}
 }

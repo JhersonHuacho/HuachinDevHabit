@@ -389,7 +389,7 @@ dotnet_diagnostic.CS8618.severity = none
 # IDE Code Analyzers rules
 
 # IDE0005: Remove unnecessary using directives
-dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.IDE0005.severity = silent
 
 # IDE0046: Convert to conditional expression
 dotnet_diagnostic.IDE0046.severity = none

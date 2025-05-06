@@ -10,6 +10,8 @@ namespace HuachinDevHabit.Api.Controllers
 	[Route("habits/{habitId}/tags")]
 	public sealed class HabitTagsController : ControllerBase
 	{
+		public static readonly string Name = nameof(HabitTagsController).Replace("Controller", string.Empty);
+
 		private readonly ApplicationDbContext _dbContext;
 
 		public HabitTagsController(ApplicationDbContext dbContext)
