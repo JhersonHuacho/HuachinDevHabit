@@ -30,7 +30,7 @@ namespace HuachinDevHabit.Api.Controllers
 
 			var tagsCollectionDto = new TagsCollectionDto 
 			{ 
-				Data = tags 
+				Items = tags 
 			};
 
 			return Ok(tagsCollectionDto);

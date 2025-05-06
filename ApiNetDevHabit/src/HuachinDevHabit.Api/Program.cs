@@ -1,9 +1,14 @@
 using FluentValidation;
 using HuachinDevHabit.Api.Database;
+using HuachinDevHabit.Api.DTOs.Habits;
+using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Extensions;
 using HuachinDevHabit.Api.Middleware;
+using HuachinDevHabit.Api.Services.DataShaping;
+using HuachinDevHabit.Api.Services.Sorting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Newtonsoft.Json.Serialization;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -16,7 +21,10 @@ builder.Services.AddControllers(options =>
 {
 	options.ReturnHttpNotAcceptable = true;
 })
-.AddNewtonsoftJson()
+.AddNewtonsoftJson(options =>
+{
+	options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+})
 .AddXmlSerializerFormatters();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -68,6 +76,15 @@ builder.Logging.AddOpenTelemetry(options =>
 	options.IncludeScopes = true;
 	options.IncludeFormattedMessage = true;
 });
+#endregion
+
+#region Sorting and Data Shaping
+// Sorting
+builder.Services.AddTransient<SortMappingProvider>();
+builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<HabitDto, Habit>>(_ =>
+	HabitMapping.SortMapping);
+// Data Shaping
+builder.Services.AddTransient<DataShapingService>();
 #endregion
 
 WebApplication app = builder.Build();

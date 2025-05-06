@@ -22,5 +22,6 @@
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.6.0.109712" />
     <!-- Swagger -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageVersion Include="System.Linq.Dynamic.Core" Version="1.6.0" />
   </ItemGroup>
 </Project>

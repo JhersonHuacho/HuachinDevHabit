@@ -2,10 +2,6 @@
 
 namespace HuachinDevHabit.Api.DTOs.Habits
 {
-	public sealed record HabitsCollectionDto
-	{
-		public List<HabitDto> Data { get; init; }
-	}
 	public sealed record HabitDto
 	{
 		public required string Id { get; init; }

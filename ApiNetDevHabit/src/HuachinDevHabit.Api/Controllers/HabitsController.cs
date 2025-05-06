@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Linq.Dynamic.Core;
+using HuachinDevHabit.Api.Services.Sorting;
+using HuachinDevHabit.Api.DTOs.Common;
+using HuachinDevHabit.Api.Services.DataShaping;
+using System.Dynamic;
 
 namespace HuachinDevHabit.Api.Controllers
 {
@@ -21,22 +26,111 @@ namespace HuachinDevHabit.Api.Controllers
 			_dbContext = dbContext;
 		}
 
-		[HttpGet]
-		public async Task<ActionResult<HabitsCollectionDto>> GetHabits() 
+		[HttpGet()]
+		public async Task<IActionResult> GetHabits(
+			[FromQuery] HabitsQueryParameters queryParameters,
+			SortMappingProvider sortMappingProvider,
+			DataShapingService dataShapingService)
 		{
-			List<HabitDto> habits = await _dbContext
-				.Habits
-				.Select(HabitQueries.ProjectToDto())
-				.ToListAsync();
-			
-			var habitsCollectionDto = new HabitsCollectionDto { Data = habits };
+			if (!sortMappingProvider.ValidateMappings<HabitDto, Habit>(queryParameters.Sort))
+			{
+				return Problem(
+					statusCode: StatusCodes.Status400BadRequest,
+					detail: $"The provided sort parameter isn't valid: '{queryParameters.Sort}'");
+			}
 
-			return Ok(habitsCollectionDto);
+			if (!dataShapingService.Validate<HabitDto>(queryParameters.Fields))
+			{
+				return Problem(
+					statusCode: StatusCodes.Status400BadRequest,
+					detail: $"The provided data shaping fields aren't valid: '{queryParameters.Fields}'");
+			}
+
+			queryParameters.Search ??= queryParameters.Search?.Trim().ToLower();
+
+			SortMapping[] sortMappings = sortMappingProvider.GetMappings<HabitDto, Habit>();
+
+			IQueryable<HabitDto> habitsQuery = _dbContext.Habits
+				.Where(h => queryParameters.Search == null ||
+							h.Name.Contains(queryParameters.Search, StringComparison.CurrentCultureIgnoreCase) ||
+							h.Description != null && h.Description.Contains(queryParameters.Search, StringComparison.CurrentCultureIgnoreCase))
+				.Where(h => queryParameters.Type == null || h.Type == queryParameters.Type)
+				.Where(h => queryParameters.Status == null || h.Status == queryParameters.Status)
+				.ApplySort(queryParameters.Sort, sortMappings)
+				.Select(HabitQueries.ProjectToDto());
+
+			int totalCount = await habitsQuery.CountAsync();
+
+			List<HabitDto> habits = await habitsQuery
+				.Skip(queryParameters.PageSize * (queryParameters.Page - 1))
+				.Take(queryParameters.PageSize)
+				.ToListAsync();
+
+			//var paginationResult = new PaginationResult<HabitDto>
+			var paginationResult = new PaginationResult<ExpandoObject>
+			{
+				//Items = habits,
+				Items = dataShapingService.ShapeCollectionData(habits, queryParameters.Fields),
+				Page = queryParameters.Page,
+				PageSize = queryParameters.PageSize,
+				TotalCount = totalCount
+			};
+
+			return Ok(paginationResult);
 		}
 
+		//[HttpGet("GetHabitsV2/{id}")]
+		////public async Task<ActionResult<HabitsCollectionDto>> GetHabits(
+		////	[FromQuery(Name = "q")] string? search,
+		////	HabitType? type,
+		////	HabitStatus? status) 
+		//public async Task<ActionResult<PaginationResult>> GetHabitsV2(int id, [FromQuery] HabitsQueryParameters queryParameters)
+		//{
+		//	queryParameters.Search ??= queryParameters.Search?.Trim().ToLower();
+
+		//	IQueryable<Habit> query = _dbContext.Habits;
+
+		//	if (!string.IsNullOrWhiteSpace(queryParameters.Search))
+		//	{
+		//		//query = query.Where(h => h.Name.ToLower().Contains(search) ||
+		//		//						 h.Description != null && h.Description.ToLower().Contains(search));
+
+		//		query = query.Where(h => h.Name.Contains(queryParameters.Search, StringComparison.CurrentCultureIgnoreCase) ||
+		//								 h.Description != null && h.Description.Contains(queryParameters.Search, StringComparison.CurrentCultureIgnoreCase));
+		//	}
+
+		//	if (queryParameters.Type != null)
+		//	{
+		//		query = query.Where(h => h.Type == queryParameters.Type);
+		//	}
+
+		//	if (queryParameters.Status != null)
+		//	{
+		//		query = query.Where(h => h.Status == queryParameters.Status);
+		//	}
+
+		//	List<HabitDto> habits = await query
+		//		.Select(HabitQueries.ProjectToDto())
+		//		.ToListAsync();
+			
+		//	var habitsCollectionDto = new PaginationResult { Data = habits };
+
+		//	return Ok(habitsCollectionDto);
+		//}		
+
 		[HttpGet("{id}")]
-		public async Task<ActionResult<HabitWithTagsDto>> GetHabit(string id)
+		public async Task<IActionResult> GetHabit(
+			string id,
+			string? fields,
+			DataShapingService dataShapingService)
 		{
+			if (!dataShapingService.Validate<HabitWithTagsDto>(fields))
+			{
+				return Problem(
+					statusCode: StatusCodes.Status400BadRequest,
+					detail: $"The provided data shaping fields aren't valid: '{fields}'");
+			}
+
 			HabitWithTagsDto? habit = await _dbContext
 				.Habits
 				.Where(h => h.Id == id)
@@ -48,8 +142,10 @@ namespace HuachinDevHabit.Api.Controllers
 				return NotFound();
 			}
 
-			return Ok(habit);
-		}		
+			ExpandoObject shapedHabitDto = dataShapingService.ShapeData(habit, fields);
+
+			return Ok(shapedHabitDto);
+		}
 
 		[HttpPost]
 		public async Task<ActionResult<HabitDto>> CreateHabit(
