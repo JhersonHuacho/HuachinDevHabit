@@ -5,15 +5,26 @@ services:
       context: .
       dockerfile: src/HuachinDevHabit.Api/Dockerfile
     ports:
-      - 5000:8080
-      - 5001:8081
+      - 5000:8090
+      - 5001:8091
     environment:
       # Seq
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://devhabit.seq:5341/ingest/otlp
       # - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       # Aspire Dashboard
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://devhabit.aspire-dashboard:18889
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://huachindevhabit.aspire-dashboard:18889
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+
+  huachindevhabit.postgres:
+     image: postgres:17.2 # or latest
+     environment:
+       POSTGRES_DB: devhabit
+       POSTGRES_USER: postgres
+       POSTGRES_PASSWORD: postgres
+     volumes:
+       - ./.containers/postgres_data:/var/lib/postgresql/data
+     ports:
+       - 5432:5432
 
   huachindevhabit.seq:
     image: datalust/seq:2024.3 # or latest
@@ -22,7 +33,7 @@ services:
     volumes:
       - ./.containers/seq_data:/data
     ports:
-      - 8080:80
+      - 8089:80
       - 5341:5341
 
   huachindevhabit.aspire-dashboard:
