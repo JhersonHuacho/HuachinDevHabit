@@ -70,11 +70,13 @@ builder.Services.AddOpenTelemetry()
 		.AddAspNetCoreInstrumentation()
 		.AddRuntimeInstrumentation())
 	.UseOtlpExporter();
+	//.UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri("http://devhabit.aspire-dashboard:18889"));
 
 builder.Logging.AddOpenTelemetry(options =>
 {
 	options.IncludeScopes = true;
 	options.IncludeFormattedMessage = true;
+	options.ParseStateValues = true;
 });
 #endregion
 

@@ -10,12 +10,16 @@ namespace HuachinDevHabit.Api.Database.Configurations
 		{
 			builder.HasKey(x => new { x.HabitId, x.TagId });
 
+			// Already applied by the FK definition (Habit, Tag)
+			builder.Property(h => h.HabitId).HasMaxLength(500);
+			builder.Property(h => h.TagId).HasMaxLength(500);
+
 			builder.HasOne<Tag>()
 				.WithMany()
 				.HasForeignKey(ht => ht.TagId);
 
 			builder.HasOne<Habit>()
-				.WithMany()
+				.WithMany(h => h.HabitTags)
 				.HasForeignKey(ht => ht.HabitId);
 		}
 	}
