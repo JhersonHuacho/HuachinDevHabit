@@ -1,26 +1,25 @@
-﻿using FluentValidation;
-using FluentValidation.Results;
+﻿using Asp.Versioning;
+using FluentValidation;
 using HuachinDevHabit.Api.Database;
+using HuachinDevHabit.Api.DTOs.Common;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
+using HuachinDevHabit.Api.Services.ContentNegotiation;
+using HuachinDevHabit.Api.Services.DataShaping;
+using HuachinDevHabit.Api.Services.Hateos;
+using HuachinDevHabit.Api.Services.Sorting;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using System.Linq.Dynamic.Core;
-using HuachinDevHabit.Api.Services.Sorting;
-using HuachinDevHabit.Api.DTOs.Common;
-using HuachinDevHabit.Api.Services.DataShaping;
 using System.Dynamic;
-using HuachinDevHabit.Api.Services.Hateos;
-using Microsoft.AspNetCore.HttpLogging;
-using HuachinDevHabit.Api.Services.ContentNegotiation;
+using System.Linq.Dynamic.Core;
 using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers
 {
 	[ApiController]
 	[Route("habits")]
+	[ApiVersion("1.0")]
 	public sealed class HabitsController : ControllerBase
 	{
 		private readonly ApplicationDbContext _dbContext;
@@ -139,6 +138,7 @@ namespace HuachinDevHabit.Api.Controllers
 		//}		
 
 		[HttpGet("{id}")]
+		[MapToApiVersion(1.0)]
 		public async Task<IActionResult> GetHabit(
 			string id,
 			string? fields,
@@ -172,7 +172,44 @@ namespace HuachinDevHabit.Api.Controllers
 			}			
 
 			return Ok(shapedHabitDto);
-		}	
+		}
+
+		[HttpGet("{id}")]
+		[ApiVersion(2.0)]
+		public async Task<IActionResult> GetHabitV2(
+			string id,
+			string? fields,
+			[FromHeader(Name = "Accept")] string? acceptHeader,
+			DataShapingService dataShapingService)
+		{
+			if (!dataShapingService.Validate<HabitWithTagsDtoV2>(fields))
+			{
+				return Problem(
+					statusCode: StatusCodes.Status400BadRequest,
+					detail: $"The provided data shaping fields aren't valid: '{fields}'");
+			}
+
+			HabitWithTagsDtoV2? habit = await _dbContext
+				.Habits
+				.Where(h => h.Id == id)
+				.Select(HabitQueries.ProjectToDtoWithTagsV2())
+				.FirstOrDefaultAsync();
+
+			if (habit == null)
+			{
+				return NotFound();
+			}
+
+			ExpandoObject shapedHabitDto = dataShapingService.ShapeData(habit, fields);
+
+			if (acceptHeader == CustomMediaTypeNames.Application.HateosJson)
+			{
+				List<LinkDto> links = CreateLinksForHabit(id, fields);
+				shapedHabitDto.TryAdd("links", links);
+			}
+
+			return Ok(shapedHabitDto);
+		}
 
 		[HttpPost]
 		public async Task<ActionResult<HabitDto>> CreateHabit(

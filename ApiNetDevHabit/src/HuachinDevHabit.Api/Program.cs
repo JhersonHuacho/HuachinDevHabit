@@ -4,7 +4,7 @@ using HuachinDevHabit.Api.Extensions;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder
-	.AddController()
+	.AddApiServices()
 	.AddErrorHandling()
 	.AddDatabase()
 	.AddSwagger()

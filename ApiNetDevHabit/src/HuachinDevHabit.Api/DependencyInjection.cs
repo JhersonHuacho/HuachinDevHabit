@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using Asp.Versioning;
+using FluentValidation;
 using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
@@ -22,19 +23,21 @@ namespace HuachinDevHabit.Api
 {
 	public static class DependencyInjection
 	{
-		public static WebApplicationBuilder AddController(this WebApplicationBuilder builder)
+		public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
 		{
+			#region Configuración de Controladores
 			builder.Services.AddControllers(options =>
-			{
-				options.ReturnHttpNotAcceptable = true;
-			})
-			.AddNewtonsoftJson(options =>
-			{
-				options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-			})
-			.AddXmlSerializerFormatters();
+				{
+					options.ReturnHttpNotAcceptable = true;
+				})
+				.AddNewtonsoftJson(options =>
+				{
+					options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+				})
+				.AddXmlSerializerFormatters();
+			#endregion
 
-			#region Agregar el nuevo Media Type para HATEOS
+			#region Configuración de Serializadores: Agregar el nuevo Media Type para HATEOS
 			builder.Services.Configure<MvcOptions>(options =>
 			{
 				NewtonsoftJsonOutputFormatter formatter = options.OutputFormatters
@@ -42,8 +45,32 @@ namespace HuachinDevHabit.Api
 					.First();
 
 				// Esto agrega Media Type application/vnd.dev-habit.hateos+json de forma global
+				formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.JsonV1);
+				formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.JsonV2);
 				formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateosJson);
+				formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateosJsonV1);
+				formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateosJsonV2);
 			});
+			#endregion
+
+			#region Configuración de Versionado de API
+			builder.Services
+				.AddApiVersioning(options =>
+				{
+					options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1.0);
+					options.AssumeDefaultVersionWhenUnspecified = true;
+					options.ReportApiVersions = true;
+					//options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
+					options.ApiVersionSelector = new DefaultApiVersionSelector(options);
+
+					//options.ApiVersionReader = new UrlSegmentApiVersionReader();
+					options.ApiVersionReader = ApiVersionReader.Combine(
+						new MediaTypeApiVersionReader("application/vnd.dev-habit.hateos.{version}+json"),
+						new MediaTypeApiVersionReaderBuilder()
+							.Template("")
+							.Build());
+				})
+				.AddMvc();
 			#endregion
 
 			return builder;
