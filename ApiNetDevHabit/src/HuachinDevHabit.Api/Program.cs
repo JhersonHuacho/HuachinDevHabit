@@ -8,7 +8,8 @@ builder
 	.AddErrorHandling()
 	.AddDatabase()
 	.AddSwagger()
-	.AddObservability();
+	.AddObservability()
+	.AddAuthenticationServices();
 
 builder.AddApplicationServices();
 

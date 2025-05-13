@@ -8,6 +8,7 @@ using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
 using HuachinDevHabit.Api.Services.Hateos;
 using HuachinDevHabit.Api.Services.Sorting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
@@ -112,6 +113,16 @@ public static class DependencyInjection
 				.UseSnakeCaseNamingConvention();
 		});
 
+		builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
+		{
+			options
+				.UseNpgsql(
+					builder.Configuration.GetConnectionString("Database"),
+					npgsqlOptions => npgsqlOptions
+						.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Identity))
+				.UseSnakeCaseNamingConvention();
+		});
+
 		return builder;
 	}
 
@@ -161,6 +172,16 @@ public static class DependencyInjection
 		#region HATEOS
 		builder.Services.AddTransient<LinkService>();
 		#endregion
+
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddAuthenticationServices(this WebApplicationBuilder builder)
+	{
+		// Este método AddAuthenticationServices se encargara de configurar los servicios de autenticación y autorización
+		builder.Services
+			.AddIdentity<IdentityUser, IdentityRole>()
+			.AddEntityFrameworkStores<ApplicationIdentityDbContext>();
 
 		return builder;
 	}

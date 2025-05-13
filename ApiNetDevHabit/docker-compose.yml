@@ -33,7 +33,7 @@ services:
     volumes:
       - ./.containers/seq_data:/data
     ports:
-      - 8089:80
+      - 8079:80
       - 5341:5341
 
   huachindevhabit.aspire-dashboard:
