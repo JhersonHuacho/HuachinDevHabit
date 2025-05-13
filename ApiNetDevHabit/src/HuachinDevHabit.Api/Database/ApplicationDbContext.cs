@@ -2,25 +2,25 @@
 using HuachinDevHabit.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace HuachinDevHabit.Api.Database
+namespace HuachinDevHabit.Api.Database;
+
+public sealed class ApplicationDbContext : DbContext
 {
-	public sealed class ApplicationDbContext : DbContext
+	public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
 	{
-		public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-		{
-			
-		}
+		
+	}
 
-		public DbSet<Habit> Habits { get; set; }
-		public DbSet<Tag> Tags { get; set; }
-		public DbSet<HabitTag> HabitTags { get; set; }
+	public DbSet<Habit> Habits { get; set; }
+	public DbSet<Tag> Tags { get; set; }
+	public DbSet<HabitTag> HabitTags { get; set; }
+	public DbSet<User> Users { get; set; }
 
-		protected override void OnModelCreating(ModelBuilder modelBuilder)
-		{
-			modelBuilder.HasDefaultSchema(Schemas.Application);
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		modelBuilder.HasDefaultSchema(Schemas.Application);
 
-			//modelBuilder.ApplyConfiguration(new HabitConfiguration());
-			modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-		}
+		//modelBuilder.ApplyConfiguration(new HabitConfiguration());
+		modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 	}
 }

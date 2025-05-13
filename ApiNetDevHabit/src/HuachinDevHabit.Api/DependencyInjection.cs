@@ -47,9 +47,9 @@ public static class DependencyInjection
 			// Esto agrega Media Type application/vnd.dev-habit.hateos+json de forma global
 			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.JsonV1);
 			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.JsonV2);
-			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateosJson);
-			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateosJsonV1);
-			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateosJsonV2);
+			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJson);
+			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV1);
+			formatter.SupportedMediaTypes.Add(CustomMediaTypeNames.Application.HateoasJsonV2);
 		});
 		#endregion
 

@@ -1,9 +1,10 @@
-﻿using HuachinDevHabit.Api.Entities;
+﻿using HuachinDevHabit.Api.DTOs.Common;
+using HuachinDevHabit.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HuachinDevHabit.Api.DTOs.Habits
 {
-	public sealed record HabitsQueryParameters
+	public sealed record HabitsQueryParameters : AcceptHeaderDto
 	{
 		[FromQuery(Name = "q")]
 		public string? Search { get; set; }
@@ -13,7 +14,5 @@ namespace HuachinDevHabit.Api.DTOs.Habits
 		public string? Fields { get; init; }
 		public int Page { get; init; } = 1;
 		public int PageSize { get; init; } = 10;
-		[FromHeader(Name = "Accept")]
-		public string? AcceptHeader { get; init; }
 	}
 }
