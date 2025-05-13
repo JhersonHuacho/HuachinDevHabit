@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using HuachinDevHabit.Api.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,9 @@ namespace HuachinDevHabit.Api.Database
 			: base(options)
 		{
 		}
+
+		public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			// Este metodo base.OnModelCreating(builder); lo que hace es 
@@ -27,6 +31,20 @@ namespace HuachinDevHabit.Api.Database
 			builder.Entity<IdentityUserLogin<string>>(b => b.ToTable("asp_net_user_logins"));
 			builder.Entity<IdentityUserToken<string>>(b => b.ToTable("asp_net_user_tokens"));
 
+			builder.Entity<RefreshToken>(entity =>
+			{
+				entity.HasKey(e => e.Id);
+
+				entity.Property(e => e.UserId).HasMaxLength(300);
+				entity.Property(e => e.Token).HasMaxLength(1000);
+
+				entity.HasIndex(e => e.Token).IsUnique();
+
+				entity.HasOne(e => e.User)
+					.WithMany()
+					.HasForeignKey(e => e.UserId)
+					.OnDelete(DeleteBehavior.Cascade);
+			});
 		}
 	}
 }

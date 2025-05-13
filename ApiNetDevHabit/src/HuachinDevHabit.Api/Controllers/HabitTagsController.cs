@@ -1,11 +1,13 @@
 ﻿using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.HabitTags;
 using HuachinDevHabit.Api.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HuachinDevHabit.Api.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("habits/{habitId}/tags")]
 	public sealed class HabitTagsController : ControllerBase

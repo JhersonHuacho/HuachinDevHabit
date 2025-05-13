@@ -6,6 +6,7 @@ using HuachinDevHabit.Api.DTOs.Tags;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.Hateos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("tags")]
 [Produces(

@@ -8,6 +8,7 @@ using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
 using HuachinDevHabit.Api.Services.Hateos;
 using HuachinDevHabit.Api.Services.Sorting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("habits")]
 [ApiVersion("1.0")]

@@ -1,10 +1,12 @@
 ﻿using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HuachinDevHabit.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("users")]
 public class UsersController : ControllerBase
