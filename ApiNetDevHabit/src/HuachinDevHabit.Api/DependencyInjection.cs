@@ -7,6 +7,7 @@ using HuachinDevHabit.Api.Middleware;
 using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
+using HuachinDevHabit.Api.Services.GitHub;
 using HuachinDevHabit.Api.Services.Hateos;
 using HuachinDevHabit.Api.Services.Sorting;
 using HuachinDevHabit.Api.Settings;
@@ -23,6 +24,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace HuachinDevHabit.Api;
@@ -185,6 +187,23 @@ public static class DependencyInjection
 		#region UserContext
 		builder.Services.AddMemoryCache();
 		builder.Services.AddTransient<UserContext>();
+		#endregion
+
+		#region Github
+		builder.Services.AddScoped<GitHubAccessTokenService>();
+		builder.Services.AddTransient<GitHubService>();
+		builder.Services
+			.AddHttpClient("github")
+			.ConfigureHttpClient(client =>
+			{
+				client.BaseAddress = new Uri("https://api.github.com");
+
+				client.DefaultRequestHeaders
+					.UserAgent.Add(new ProductInfoHeaderValue("DevHabit", "1.0"));
+
+				client.DefaultRequestHeaders
+					.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+			});
 		#endregion
 
 		return builder;
