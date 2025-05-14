@@ -7,6 +7,7 @@ using HuachinDevHabit.Api.Middleware;
 using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
+using HuachinDevHabit.Api.Services.Encryption;
 using HuachinDevHabit.Api.Services.GitHub;
 using HuachinDevHabit.Api.Services.Hateos;
 using HuachinDevHabit.Api.Services.Sorting;
@@ -204,6 +205,11 @@ public static class DependencyInjection
 				client.DefaultRequestHeaders
 					.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 			});
+		#endregion
+
+		#region Cifrado
+		builder.Services.Configure<EncryptionOptions>(builder.Configuration.GetSection("Encryption"));
+		builder.Services.AddTransient<EncryptionService>();
 		#endregion
 
 		return builder;

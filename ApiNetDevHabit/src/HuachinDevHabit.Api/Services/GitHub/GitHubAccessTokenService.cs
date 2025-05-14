@@ -1,6 +1,7 @@
 ﻿using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.GitHub;
 using HuachinDevHabit.Api.Entities;
+using HuachinDevHabit.Api.Services.Encryption;
 using Microsoft.EntityFrameworkCore;
 
 namespace HuachinDevHabit.Api.Services.GitHub;
@@ -8,10 +9,12 @@ namespace HuachinDevHabit.Api.Services.GitHub;
 public sealed class GitHubAccessTokenService
 {
 	private readonly ApplicationDbContext _applicationDbContext;
+	private readonly EncryptionService _encryptionService;
 
-	public GitHubAccessTokenService(ApplicationDbContext applicationDbContext)
+	public GitHubAccessTokenService(ApplicationDbContext applicationDbContext, EncryptionService encryptionService)
 	{
 		_applicationDbContext = applicationDbContext;
+		_encryptionService = encryptionService;
 	}
 
 	public async Task StoreAsync(
@@ -20,10 +23,11 @@ public sealed class GitHubAccessTokenService
 		CancellationToken cancellationToken = default)
 	{
 		GitHubAccessToken? existingAccessToken = await GetAccessTokenAsync(userId, cancellationToken);
+		string encryptedToken = _encryptionService.Encrypt(accessTokenDto.AccessToken);
 
 		if (existingAccessToken is not null)
 		{
-			existingAccessToken.Token = accessTokenDto.AccessToken;
+			existingAccessToken.Token = encryptedToken;
 			existingAccessToken.ExpiresAtUtc = DateTime.UtcNow.AddDays(accessTokenDto.ExpiresInDays);
 		}
 		else
@@ -32,7 +36,7 @@ public sealed class GitHubAccessTokenService
 			{
 				Id = $"gh_{Guid.NewGuid()}",
 				UserId = userId,
-				Token = accessTokenDto.AccessToken,
+				Token = encryptedToken,
 				CreatedAtUtc = DateTime.UtcNow,
 				ExpiresAtUtc = DateTime.UtcNow.AddDays(accessTokenDto.ExpiresInDays)
 			});
@@ -45,7 +49,14 @@ public sealed class GitHubAccessTokenService
 	{
 		GitHubAccessToken? gitHubAccessToken = await GetAccessTokenAsync(userId, cancellationToken);
 
-		return gitHubAccessToken?.Token;
+		if (gitHubAccessToken is null)
+		{
+			return null;
+		}
+
+		string decryptedToken = _encryptionService.Decrypt(gitHubAccessToken.Token);
+
+		return decryptedToken;
 	}
 
 	public async Task RevokeAsync(string userId, CancellationToken cancellationToken = default)
