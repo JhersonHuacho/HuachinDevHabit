@@ -4,6 +4,7 @@ using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Common;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
+using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
 using HuachinDevHabit.Api.Services.Hateos;
@@ -18,7 +19,7 @@ using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers;
 
-[Authorize]
+[Authorize(Roles = $"{Roles.Member}")]
 [ApiController]
 [Route("habits")]
 [ApiVersion("1.0")]
@@ -33,11 +34,13 @@ public sealed class HabitsController : ControllerBase
 {
 	private readonly ApplicationDbContext _dbContext;
 	private readonly LinkService _linkService;
+	private readonly UserContext _userContext;
 
-	public HabitsController(ApplicationDbContext dbContext, LinkService linkService)
+	public HabitsController(ApplicationDbContext dbContext, LinkService linkService, UserContext userContext)
 	{
 		_dbContext = dbContext;
 		_linkService = linkService;
+		_userContext = userContext;
 	}
 
 	[HttpGet]
@@ -46,6 +49,12 @@ public sealed class HabitsController : ControllerBase
 		SortMappingProvider sortMappingProvider,
 		DataShapingService dataShapingService)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		if (!sortMappingProvider.ValidateMappings<HabitDto, Habit>(queryParameters.Sort))
 		{
 			return Problem(
@@ -65,6 +74,7 @@ public sealed class HabitsController : ControllerBase
 		SortMapping[] sortMappings = sortMappingProvider.GetMappings<HabitDto, Habit>();
 
 		IQueryable<HabitDto> habitsQuery = _dbContext.Habits
+			.Where(h => h.UserId == userId)
 			.Where(h => queryParameters.Search == null ||
 						h.Name.Contains(queryParameters.Search, StringComparison.CurrentCultureIgnoreCase) ||
 						h.Description != null && h.Description.Contains(queryParameters.Search, StringComparison.CurrentCultureIgnoreCase))
@@ -150,6 +160,12 @@ public sealed class HabitsController : ControllerBase
 		[FromQuery] HabitQueryParameters queryParameters,
 		DataShapingService dataShapingService)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		if (!dataShapingService.Validate<HabitWithTagsDto>(queryParameters.Fields))
 		{
 			return Problem(
@@ -159,7 +175,7 @@ public sealed class HabitsController : ControllerBase
 
 		HabitWithTagsDto? habit = await _dbContext
 			.Habits
-			.Where(h => h.Id == id)
+			.Where(h => h.Id == id && h.UserId == userId)
 			.Select(HabitQueries.ProjectToDtoWithTags())
 			.FirstOrDefaultAsync();
 
@@ -187,6 +203,12 @@ public sealed class HabitsController : ControllerBase
 		[FromHeader(Name = "Accept")] string? acceptHeader,
 		DataShapingService dataShapingService)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		if (!dataShapingService.Validate<HabitWithTagsDtoV2>(fields))
 		{
 			return Problem(
@@ -196,7 +218,7 @@ public sealed class HabitsController : ControllerBase
 
 		HabitWithTagsDtoV2? habit = await _dbContext
 			.Habits
-			.Where(h => h.Id == id)
+			.Where(h => h.Id == id && h.UserId == id)
 			.Select(HabitQueries.ProjectToDtoWithTagsV2())
 			.FirstOrDefaultAsync();
 
@@ -216,12 +238,20 @@ public sealed class HabitsController : ControllerBase
 		return Ok(shapedHabitDto);
 	}
 
+	// POST /habits
+	// POST /habits?userId=.... (evitamos estos)
 	[HttpPost]
 	public async Task<ActionResult<HabitDto>> CreateHabit(
 		[FromBody] CreateHabitDto createHabitDto,
 		[FromHeader] AcceptHeaderDto acceptHeader,
 		IValidator<CreateHabitDto> validator)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		#region Fluent Validation
 		//ValidationResult validationResult = await validator.ValidateAsync(createHabitDto);
 
@@ -233,7 +263,7 @@ public sealed class HabitsController : ControllerBase
 		await validator.ValidateAndThrowAsync(createHabitDto);
 		#endregion
 
-		Habit habit = createHabitDto.ToEntity();
+		Habit habit = createHabitDto.ToEntity(userId);
 		
 		_dbContext.Habits.Add(habit);
 		await _dbContext.SaveChangesAsync();
@@ -251,7 +281,13 @@ public sealed class HabitsController : ControllerBase
 	[HttpPut("{id}")]
 	public async Task<ActionResult> UpdateHabit(string id, [FromBody] UpdateHabitDto updateHabitDto)
 	{
-		Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
+		Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id && h.UserId == id);
 		
 		if (habit == null)
 		{
@@ -284,7 +320,13 @@ public sealed class HabitsController : ControllerBase
 	[HttpPatch("{id}")]
 	public async Task<ActionResult> PatchHabit(string id, JsonPatchDocument<HabitDto> patchDocument)
 	{
-		Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
+		Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id && h.UserId == id);
 
 		if (habit == null)
 		{
@@ -313,7 +355,13 @@ public sealed class HabitsController : ControllerBase
 	[HttpDelete("{id}")]
 	public async Task<ActionResult> DeleteHabit(string id)
 	{
-		Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id);
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
+		Habit? habit = await _dbContext.Habits.FirstOrDefaultAsync(h => h.Id == id && h.UserId == id);
 		if (habit == null)
 		{
 			return NotFound();
@@ -376,6 +424,7 @@ public sealed class HabitsController : ControllerBase
 	}
 	private List<LinkDto> CreateLinksForHabit(string id, string? fields)
 	{
+		//User.IsInRole(Roles.Admin);
 		List<LinkDto> links =
 		[
 			_linkService.Create(nameof(GetHabit), "self", HttpMethods.Get, new { id, fields }),

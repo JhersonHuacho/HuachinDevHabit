@@ -17,11 +17,12 @@ namespace HuachinDevHabit.Api.DTOs.Tags
 			};
 			return tagDto;
 		}
-		public static Tag ToEntity(this CreateTagDto createTagDto)
+		public static Tag ToEntity(this CreateTagDto createTagDto, string userId)
 		{
 			Tag tag = new()
 			{
 				Id = $"t_{Guid.NewGuid()}",
+				UserId = userId,
 				Name = createTagDto.Name,
 				Description = createTagDto.Description,
 				CreatedAtUtc = DateTime.UtcNow

@@ -62,11 +62,12 @@ namespace HuachinDevHabit.Api.DTOs.Habits
 
 			return habitDto;
 		}
-		public static Habit ToEntity(this CreateHabitDto createHabitDto)
+		public static Habit ToEntity(this CreateHabitDto createHabitDto, string userId)
 		{
 			Habit habit = new()
 			{
 				Id = $"h_{Guid.NewGuid()}",
+				UserId = userId,
 				Name = createHabitDto.Name,
 				Description = createHabitDto.Description,
 				Type = createHabitDto.Type,

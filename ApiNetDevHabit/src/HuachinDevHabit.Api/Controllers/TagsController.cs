@@ -4,6 +4,7 @@ using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Common;
 using HuachinDevHabit.Api.DTOs.Tags;
 using HuachinDevHabit.Api.Entities;
+using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.Hateos;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers;
 
-[Authorize]
+[Authorize(Roles = $"{Roles.Member}")]
 [ApiController]
 [Route("tags")]
 [Produces(
@@ -26,18 +27,27 @@ public sealed class TagsController : ControllerBase
 {
 	private readonly ApplicationDbContext _dbContext;
 	private readonly LinkService _linkService;
+	private readonly UserContext _userContext;
 
-	public TagsController(ApplicationDbContext dbContext, LinkService linkService)
+	public TagsController(ApplicationDbContext dbContext, LinkService linkService, UserContext userContext)
 	{
 		_dbContext = dbContext;
 		_linkService = linkService;
+		_userContext = userContext;
 	}
 
 	[HttpGet]
 	public async Task<ActionResult<IEnumerable<TagsCollectionDto>>> GetTags(
 		[FromHeader] AcceptHeaderDto acceptHeader)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		List<TagDto> tags = await _dbContext.Tags
+			.Where(tag => tag.UserId == userId)
 			.Select(TagQueries.ProjectToDto())
 			.ToListAsync();
 
@@ -59,8 +69,14 @@ public sealed class TagsController : ControllerBase
 		string id,
 		[FromHeader] AcceptHeaderDto acceptHeader)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		TagDto? tag = await _dbContext.Tags
-			.Where(t => t.Id == id)
+			.Where(t => t.Id == id && t.UserId == userId)
 			.Select(TagQueries.ProjectToDto())
 			.FirstOrDefaultAsync();
 
@@ -84,6 +100,12 @@ public sealed class TagsController : ControllerBase
 		IValidator<CreateTagDto> validator,
 		ProblemDetailsFactory problemDetailsFactory)
 	{
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
 		ValidationResult validationResult = await validator.ValidateAsync(createTagDto);
 
 		if (!validationResult.IsValid)
@@ -99,7 +121,7 @@ public sealed class TagsController : ControllerBase
 			return BadRequest(problem);
 		}
 
-		Tag tag = createTagDto.ToEntity();
+		Tag tag = createTagDto.ToEntity(userId);
 
 		if (await _dbContext.Tags.AnyAsync(t => t.Name == tag.Name))
 		{
@@ -125,7 +147,13 @@ public sealed class TagsController : ControllerBase
 	[HttpPut("{id}")]
 	public async Task<ActionResult> UpdateTag(string id, [FromBody] UpdateTagDto updateTagDto)
 	{
-		Tag? tag = await _dbContext.Tags.FirstOrDefaultAsync(h => h.Id == id);
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
+		Tag? tag = await _dbContext.Tags.FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
 
 		if (tag == null)
 		{
@@ -142,7 +170,13 @@ public sealed class TagsController : ControllerBase
 	[HttpDelete("{id}")]
 	public async Task<ActionResult> DeleteTag(string id)
 	{
-		Tag? tag = await _dbContext.Tags.FirstOrDefaultAsync(h => h.Id == id);
+		string? userId = await _userContext.GetUserIdAsync();
+		if (string.IsNullOrWhiteSpace(userId))
+		{
+			return Unauthorized();
+		}
+
+		Tag? tag = await _dbContext.Tags.FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
 
 		if (tag == null)
 		{

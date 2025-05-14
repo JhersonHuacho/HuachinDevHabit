@@ -182,6 +182,11 @@ public static class DependencyInjection
 		builder.Services.AddTransient<TokenProvider>();
 		#endregion
 
+		#region UserContext
+		builder.Services.AddMemoryCache();
+		builder.Services.AddTransient<UserContext>();
+		#endregion
+
 		return builder;
 	}
 

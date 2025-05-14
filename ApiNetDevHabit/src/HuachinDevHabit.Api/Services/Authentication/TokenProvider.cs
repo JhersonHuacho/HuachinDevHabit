@@ -31,8 +31,11 @@ namespace HuachinDevHabit.Api.Services.Authentication
 			List<Claim> claims = new()
 			{
 				new Claim(JwtRegisteredClaimNames.Sub, tokenRequest.UserId),
-				new Claim(JwtRegisteredClaimNames.Email, tokenRequest.Email)
+				new Claim(JwtRegisteredClaimNames.Email, tokenRequest.Email)//,
+				//..tokenRequest.Roles.Select(role => new Claim(ClaimTypes.Role, role))
+
 			};
+			claims.AddRange(tokenRequest.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{

@@ -54,9 +54,9 @@ namespace HuachinDevHabit.Api.Controllers
 				Email = registerUserDto.Email,
 			};
 
-			IdentityResult identityResult = await _userManager.CreateAsync(identityUser, registerUserDto.Password);
+			IdentityResult createUserResult = await _userManager.CreateAsync(identityUser, registerUserDto.Password);
 
-			if (!identityResult.Succeeded)
+			if (!createUserResult.Succeeded)
 			{				
 				//var extensions = new Dictionary<string, object?>
 				//{
@@ -75,7 +75,7 @@ namespace HuachinDevHabit.Api.Controllers
 				};
 
 				// Puedes agregar un diccionario de errores así:
-				problemDetails.Extensions["errors"] = identityResult.Errors.ToDictionary(e => e.Code, e => e.Description);
+				problemDetails.Extensions["errors"] = createUserResult.Errors.ToDictionary(e => e.Code, e => e.Description);
 
 				//return Problem(
 				//	detail: "Unable to register user, please try againg",
@@ -87,13 +87,30 @@ namespace HuachinDevHabit.Api.Controllers
 
 			// Create app user
 
+			IdentityResult addToRoleResult = await _userManager.AddToRoleAsync(identityUser, Roles.Member);
+
+			if (!addToRoleResult.Succeeded)
+			{
+
+				var problemDetails = new ProblemDetails
+				{
+					Status = StatusCodes.Status400BadRequest,
+					Title = "Unable to register user",
+					Detail = "Unable to register user, please try again"
+				};
+
+				problemDetails.Extensions["errors"] = addToRoleResult.Errors.ToDictionary(e => e.Code, e => e.Description);
+
+				return BadRequest(problemDetails);
+			}
+
 			User user = registerUserDto.ToEntity();
 			user.IdentityId = identityUser.Id;
 
 			_applicationDbContext.Users.Add(user);
 			await _applicationDbContext.SaveChangesAsync();
 
-			var tokenRequest = new TokenRequest(identityUser.Id, identityUser.Email);
+			var tokenRequest = new TokenRequest(identityUser.Id, identityUser.Email, [Roles.Member]);
 			AccessTokensDto accessTokens = _tokenProvider.Create(tokenRequest);
 
 			var refreshToken = new RefreshToken
@@ -168,7 +185,8 @@ namespace HuachinDevHabit.Api.Controllers
 				return Unauthorized("Invalid password");
 			}
 
-			var tokenRequest = new TokenRequest(identityUser.Id, identityUser.Email!);
+			IList<string> roles = await _userManager.GetRolesAsync(identityUser);
+			var tokenRequest = new TokenRequest(identityUser.Id, identityUser.Email!, roles);
 			AccessTokensDto accessTokens = _tokenProvider.Create(tokenRequest);
 
 			var refreshToken = new RefreshToken
@@ -207,7 +225,8 @@ namespace HuachinDevHabit.Api.Controllers
 				return Unauthorized("User not found");
 			}
 
-			var tokenRequest = new TokenRequest(refreshToken.User.Id, refreshToken.User.Email!);
+			IList<string> roles = await _userManager.GetRolesAsync(refreshToken.User);
+			var tokenRequest = new TokenRequest(refreshToken.User.Id, refreshToken.User.Email!, roles);
 			AccessTokensDto accessTokens = _tokenProvider.Create(tokenRequest);
 
 			refreshToken.Token = accessTokens.RefreshToken;

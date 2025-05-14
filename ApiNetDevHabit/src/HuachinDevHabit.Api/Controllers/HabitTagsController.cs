@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HuachinDevHabit.Api.Controllers
 {
-	[Authorize]
+	[Authorize(Roles = $"{Roles.Member}")]
 	[ApiController]
 	[Route("habits/{habitId}/tags")]
 	public sealed class HabitTagsController : ControllerBase

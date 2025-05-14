@@ -11,6 +11,7 @@ namespace HuachinDevHabit.Api.Database.Configurations
 			builder.HasKey(x => x.Id);
 
 			builder.Property(h => h.Id).HasMaxLength(500);
+			builder.Property(h => h.UserId).HasMaxLength(500);
 
 			builder.Property(h => h.Name).HasMaxLength(100);
 
@@ -26,6 +27,10 @@ namespace HuachinDevHabit.Api.Database.Configurations
 			builder.HasMany(h => h.Tags)
 				.WithMany()
 				.UsingEntity<HabitTag>();
+
+			builder.HasOne<User>()
+				.WithMany()
+				.HasForeignKey(h => h.UserId);
 		}
 	}
 }
