@@ -3,11 +3,12 @@ using HuachinDevHabit.Api.DTOs.Common;
 using HuachinDevHabit.Api.DTOs.Users;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Services.Authentication;
+using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.Hateos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
+using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers;
 
@@ -15,6 +16,11 @@ namespace HuachinDevHabit.Api.Controllers;
 [Authorize(Roles = $"{Roles.Member}")]
 [ApiController]
 [Route("users")]
+[Produces(
+	MediaTypeNames.Application.Json,
+	CustomMediaTypeNames.Application.JsonV1,
+	CustomMediaTypeNames.Application.HateoasJson,
+	CustomMediaTypeNames.Application.HateoasJsonV1)]
 public class UsersController : ControllerBase
 {
 	private readonly ApplicationDbContext _dbContext;

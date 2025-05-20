@@ -2,17 +2,23 @@
 using HuachinDevHabit.Api.DTOs.GitHub;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Services.Authentication;
+using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.GitHub;
 using HuachinDevHabit.Api.Services.Hateos;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers
 {
 	[Authorize(Roles = Roles.Member)]
 	[ApiController]
 	[Route("github")]
+	[Produces(
+		MediaTypeNames.Application.Json,
+		CustomMediaTypeNames.Application.JsonV1,
+		CustomMediaTypeNames.Application.HateoasJson,
+		CustomMediaTypeNames.Application.HateoasJsonV1)]
 	public sealed class GitHubController : ControllerBase
 	{
 		private readonly GitHubAccessTokenService _gitHubAccessTokenService;

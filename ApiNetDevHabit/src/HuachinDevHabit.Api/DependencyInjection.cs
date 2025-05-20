@@ -3,6 +3,7 @@ using FluentValidation;
 using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
+using HuachinDevHabit.Api.Jobs;
 using HuachinDevHabit.Api.Middleware;
 using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
@@ -26,6 +27,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Quartz;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -247,6 +249,32 @@ public static class DependencyInjection
 			});
 
 		builder.Services.AddAuthorization();
+
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddBackgroundJobs(this WebApplicationBuilder builder)
+	{
+		builder.Services.AddQuartz(q =>
+		{
+			q.AddJob<GitHubAutomationSchedulerJob>(opts => opts.WithIdentity("github-automation-scheduler"));
+
+			q.AddTrigger(opts => opts
+				.ForJob("github-automation-scheduler")
+				.WithIdentity("github-automation-scheduler-trigger")
+				.WithSimpleSchedule(schedule =>
+				{
+					GitHubAutomationOptions settings = builder.Configuration
+						.GetSection(GitHubAutomationOptions.SectionName)
+						.Get<GitHubAutomationOptions>()!;
+
+					schedule.WithIntervalInMinutes(settings.ScanIntervalMinutes)
+						.RepeatForever();
+				}));
+		});
+
+
+		builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
 		return builder;
 	}
