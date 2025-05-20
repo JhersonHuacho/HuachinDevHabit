@@ -13,6 +13,7 @@ using HuachinDevHabit.Api.Services.Hateos;
 using HuachinDevHabit.Api.Services.Sorting;
 using HuachinDevHabit.Api.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -246,6 +247,26 @@ public static class DependencyInjection
 			});
 
 		builder.Services.AddAuthorization();
+
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddCorsPolicy(this WebApplicationBuilder builder)
+	{
+		Settings.CorsOptions corsOptions = builder.Configuration
+			.GetSection(Settings.CorsOptions.SectionName)
+			.Get<Settings.CorsOptions>()!;
+
+		builder.Services.AddCors(options =>
+		{
+			options.AddPolicy(Settings.CorsOptions.PolicyName, policy =>
+			{
+				policy
+					.WithOrigins(corsOptions.AllowedOrigins)
+					.AllowAnyHeader()
+					.AllowAnyMethod();
+			});
+		});
 
 		return builder;
 	}

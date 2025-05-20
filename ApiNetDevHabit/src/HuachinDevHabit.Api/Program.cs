@@ -1,5 +1,6 @@
 using HuachinDevHabit.Api;
 using HuachinDevHabit.Api.Extensions;
+using HuachinDevHabit.Api.Settings;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +10,8 @@ builder
 	.AddDatabase()
 	.AddSwagger()
 	.AddObservability()
-	.AddAuthenticationServices();
+	.AddAuthenticationServices()
+	.AddCorsPolicy();
 
 builder.AddApplicationServices();
 
@@ -28,6 +30,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseExceptionHandler();
+
+app.UseCors(CorsOptions.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
