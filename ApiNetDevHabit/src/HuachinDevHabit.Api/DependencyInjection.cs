@@ -1,6 +1,7 @@
 ﻿using Asp.Versioning;
 using FluentValidation;
 using HuachinDevHabit.Api.Database;
+using HuachinDevHabit.Api.DTOs.Entries;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Jobs;
@@ -173,6 +174,8 @@ public static class DependencyInjection
 		builder.Services.AddTransient<SortMappingProvider>();
 		builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<HabitDto, Habit>>(_ =>
 			HabitMapping.SortMapping);
+		builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<EntryDto, Entry>>(_ =>
+			EntryMappings.SortMapping);
 		// Data Shaping
 		builder.Services.AddTransient<DataShapingService>();
 		#endregion

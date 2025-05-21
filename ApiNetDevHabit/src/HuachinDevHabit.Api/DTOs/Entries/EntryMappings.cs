@@ -8,10 +8,10 @@ namespace HuachinDevHabit.Api.DTOs.Entries
 		public static readonly SortMappingDefinition<EntryDto, Entry> SortMapping = new()
 		{
 			Mappings =
-		[
-			new SortMapping(nameof(EntryDto.Date), nameof(Entry.Date)),
-			new SortMapping(nameof(EntryDto.CreatedAtUtc), nameof(Entry.CreatedAtUtc))
-		]
+			[
+				new SortMapping(nameof(EntryDto.Date), nameof(Entry.Date)),
+				new SortMapping(nameof(EntryDto.CreatedAtUtc), nameof(Entry.CreatedAtUtc))
+			]
 		};
 
 		public static Entry ToEntity(this CreateEntryDto dto, string userId, Habit habit)
