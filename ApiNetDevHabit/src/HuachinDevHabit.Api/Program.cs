@@ -1,5 +1,6 @@
 using HuachinDevHabit.Api;
 using HuachinDevHabit.Api.Extensions;
+using HuachinDevHabit.Api.Middleware;
 using HuachinDevHabit.Api.Settings;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,8 @@ app.UseCors(CorsOptions.PolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ETagMiddleware>();
 
 app.MapControllers();
 

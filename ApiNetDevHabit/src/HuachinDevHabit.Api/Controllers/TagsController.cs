@@ -15,6 +15,7 @@ using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers;
 
+[ResponseCache(Duration = 120)]
 [Authorize(Roles = $"{Roles.Member}")]
 [ApiController]
 [Route("tags")]

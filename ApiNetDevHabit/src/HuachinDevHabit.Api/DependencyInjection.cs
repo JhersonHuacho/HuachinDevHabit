@@ -7,6 +7,7 @@ using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Jobs;
 using HuachinDevHabit.Api.Middleware;
 using HuachinDevHabit.Api.Services.Authentication;
+using HuachinDevHabit.Api.Services.Cache;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
 using HuachinDevHabit.Api.Services.Encryption;
@@ -84,6 +85,10 @@ public static class DependencyInjection
 						.Build());
 			})
 			.AddMvc();
+		#endregion
+
+		#region Configuración de Response Caching
+		builder.Services.AddResponseCaching();
 		#endregion
 
 		return builder;
@@ -216,6 +221,10 @@ public static class DependencyInjection
 		#region Cifrado
 		builder.Services.Configure<EncryptionOptions>(builder.Configuration.GetSection("Encryption"));
 		builder.Services.AddTransient<EncryptionService>();
+		#endregion
+
+		#region Caché: Aquí voy a agregar el servicio de ETag
+		builder.Services.AddSingleton<InMemoryETagStore>();
 		#endregion
 
 		return builder;
