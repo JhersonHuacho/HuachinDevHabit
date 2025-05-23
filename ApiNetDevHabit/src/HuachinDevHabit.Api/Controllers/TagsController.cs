@@ -5,6 +5,7 @@ using HuachinDevHabit.Api.DTOs.Common;
 using HuachinDevHabit.Api.DTOs.Tags;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Services.Authentication;
+using HuachinDevHabit.Api.Services.Cache;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.Hateos;
 using Microsoft.AspNetCore.Authorization;
@@ -146,7 +147,7 @@ public sealed class TagsController : ControllerBase
 	}
 
 	[HttpPut("{id}")]
-	public async Task<ActionResult> UpdateTag(string id, [FromBody] UpdateTagDto updateTagDto)
+	public async Task<ActionResult> UpdateTag(string id, [FromBody] UpdateTagDto updateTagDto, InMemoryETagStore eTagStore)
 	{
 		string? userId = await _userContext.GetUserIdAsync();
 		if (string.IsNullOrWhiteSpace(userId))
@@ -164,6 +165,7 @@ public sealed class TagsController : ControllerBase
 		tag.UpdateFromDto(updateTagDto);
 
 		await _dbContext.SaveChangesAsync();
+		eTagStore.SetETag(Request.Path.Value!, tag.ToDto());
 
 		return NoContent();
 	}

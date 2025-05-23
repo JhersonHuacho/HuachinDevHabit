@@ -7,6 +7,11 @@ namespace HuachinDevHabit.Api.Middleware
 	public sealed class ETagMiddleware
 	{
 		private readonly RequestDelegate _next;
+		private static readonly string[] ConcurrencyCheckMethods =
+		{
+			HttpMethods.Put,
+			HttpMethods.Patch
+		};
 
 		public ETagMiddleware(RequestDelegate next)
 		{
@@ -23,6 +28,20 @@ namespace HuachinDevHabit.Api.Middleware
 
 			string resourceUri = context.Request.Path.Value!;
 			string? ifNoneMatch = context.Request.Headers.IfNoneMatch.FirstOrDefault()?.Replace("\"", "");
+			string? ifMatch = context.Request.Headers.IfMatch.FirstOrDefault()?.Replace("\"", "");
+
+			if (ConcurrencyCheckMethods.Contains(context.Request.Method) && !string.IsNullOrEmpty(ifMatch))
+			{
+				string currentEtag = inMemoryETagStore.GetETag(resourceUri);
+
+				if (!string.IsNullOrWhiteSpace(currentEtag) && ifMatch != currentEtag)
+				{
+					// si no coinciden los etags, entonces tenemos un problema de concurrencia. se devuelve un 412 Precondition Failed
+					context.Response.StatusCode = StatusCodes.Status412PreconditionFailed;
+					context.Response.ContentLength = 0;
+					return;
+				}
+			}
 
 			Stream originalStream = context.Response.Body;
 			using var memoryStream = new MemoryStream();
