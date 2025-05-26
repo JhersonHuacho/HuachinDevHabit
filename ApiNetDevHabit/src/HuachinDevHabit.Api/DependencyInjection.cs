@@ -13,6 +13,7 @@ using HuachinDevHabit.Api.Services.DataShaping;
 using HuachinDevHabit.Api.Services.Encryption;
 using HuachinDevHabit.Api.Services.GitHub;
 using HuachinDevHabit.Api.Services.Hateos;
+using HuachinDevHabit.Api.Services.Refit;
 using HuachinDevHabit.Api.Services.Sorting;
 using HuachinDevHabit.Api.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,6 +31,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Quartz;
+using Refit;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -216,6 +218,16 @@ public static class DependencyInjection
 				client.DefaultRequestHeaders
 					.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 			});
+		#endregion
+
+		#region GitHub usando Refit
+		builder.Services.AddTransient<RefitGitHubService>();
+		builder.Services
+			.AddRefitClient<IGitHubApi>(new RefitSettings
+			{
+				ContentSerializer = new NewtonsoftJsonContentSerializer()
+			})
+			.ConfigureHttpClient(client => client.BaseAddress = new Uri("https://api.github.com"));
 		#endregion
 
 		#region Cifrado

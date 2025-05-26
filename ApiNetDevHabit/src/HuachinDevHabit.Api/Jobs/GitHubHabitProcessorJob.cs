@@ -12,7 +12,7 @@ namespace HuachinDevHabit.Api.Jobs
 	{
 		private readonly ApplicationDbContext _applicationDbContext;
 		private readonly GitHubAccessTokenService _gitHubAccessTokenService;
-		private readonly GitHubService _gitHubService;
+		private readonly RefitGitHubService _gitHubService;
 		private readonly ILogger<GitHubHabitProcessorJob> _logger;
 
 		private const string PushEventType = "PushEvent";
@@ -20,7 +20,7 @@ namespace HuachinDevHabit.Api.Jobs
 		public GitHubHabitProcessorJob(
 			ApplicationDbContext applicationDbContext, 
 			GitHubAccessTokenService gitHubAccessTokenService, 
-			GitHubService gitHubService, 
+			RefitGitHubService gitHubService, 
 			ILogger<GitHubHabitProcessorJob> logger)
 		{
 			_applicationDbContext = applicationDbContext;

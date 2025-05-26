@@ -22,11 +22,11 @@ namespace HuachinDevHabit.Api.Controllers
 	public sealed class GitHubController : ControllerBase
 	{
 		private readonly GitHubAccessTokenService _gitHubAccessTokenService;
-		private readonly GitHubService _gitHubService;
+		private readonly RefitGitHubService _gitHubService;
 		private readonly UserContext _userContext;
 		private readonly LinkService _linkService;
 
-		public GitHubController(GitHubAccessTokenService gitHubAccessTokenService, GitHubService gitHubService, UserContext userContext, LinkService linkService)
+		public GitHubController(GitHubAccessTokenService gitHubAccessTokenService, RefitGitHubService gitHubService, UserContext userContext, LinkService linkService)
 		{
 			_gitHubAccessTokenService = gitHubAccessTokenService;
 			_gitHubService = gitHubService;
