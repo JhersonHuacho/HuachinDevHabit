@@ -6,6 +6,7 @@ using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Jobs;
 using HuachinDevHabit.Api.Middleware;
+using HuachinDevHabit.Api.Services;
 using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.Cache;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
@@ -23,6 +24,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 using Npgsql;
@@ -30,6 +32,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Polly;
 using Quartz;
 using Refit;
 using System.Net.Http.Headers;
@@ -220,14 +223,40 @@ public static class DependencyInjection
 			});
 		#endregion
 
+		#region Usanso Resilience estandard de Microsoft
+		builder.Services.AddHttpClient().ConfigureHttpClientDefaults(b => b.AddStandardResilienceHandler());
+		#endregion
+
 		#region GitHub usando Refit
 		builder.Services.AddTransient<RefitGitHubService>();
+		builder.Services.AddTransient<DelayHandler>();
 		builder.Services
 			.AddRefitClient<IGitHubApi>(new RefitSettings
 			{
 				ContentSerializer = new NewtonsoftJsonContentSerializer()
 			})
-			.ConfigureHttpClient(client => client.BaseAddress = new Uri("https://api.github.com"));
+			.ConfigureHttpClient(client => client.BaseAddress = new Uri("https://api.github.com"))
+			.AddHttpMessageHandler<DelayHandler>();
+			//// Configuring a custom resilience pipeline for the GitHub API client			
+			//.AddResilienceHandler("custom", pipeline =>
+			//{
+			//	pipeline.AddTimeout(TimeSpan.FromSeconds(5));
+			//	pipeline.AddRetry(new HttpRetryStrategyOptions 
+			//	{
+			//		MaxRetryAttempts = 3,
+			//		BackoffType = DelayBackoffType.Exponential,
+			//		UseJitter = true,
+			//		Delay = TimeSpan.FromMilliseconds(500)
+			//	});
+			//	pipeline.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+			//	{
+			//		SamplingDuration = TimeSpan.FromSeconds(10),
+			//		FailureRatio = 0.9,
+			//		MinimumThroughput = 10,
+			//		BreakDuration = TimeSpan.FromSeconds(5)
+			//	});
+			//	pipeline.AddTimeout(TimeSpan.FromSeconds(1));
+			//})
 		#endregion
 
 		#region Cifrado
