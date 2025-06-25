@@ -8,6 +8,7 @@ using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.DataShaping;
 using HuachinDevHabit.Api.Services.Hateos;
+using HuachinDevHabit.Api.Services.Idempotence;
 using HuachinDevHabit.Api.Services.Sorting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -223,6 +224,7 @@ namespace HuachinDevHabit.Api.Controllers
 		}
 
 		[HttpPost]
+		[IdempotentRequest]
 		public async Task<ActionResult<EntryDto>> CreateEntry(
 			CreateEntryDto createEntryDto,
 			[FromHeader] AcceptHeaderDto acceptHeader,
