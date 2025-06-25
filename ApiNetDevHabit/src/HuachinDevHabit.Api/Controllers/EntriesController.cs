@@ -11,12 +11,15 @@ using HuachinDevHabit.Api.Services.Hateos;
 using HuachinDevHabit.Api.Services.Sorting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Dynamic;
 using System.Net.Mime;
 
 namespace HuachinDevHabit.Api.Controllers
 {
+	[EnableRateLimiting("default")]
+	//[DisableRateLimiting]
 	[Authorize(Roles = Roles.Member)]
 	[ApiController]
 	[Route("entries")]

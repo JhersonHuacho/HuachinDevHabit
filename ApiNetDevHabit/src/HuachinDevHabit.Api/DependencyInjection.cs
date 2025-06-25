@@ -4,6 +4,7 @@ using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Entries;
 using HuachinDevHabit.Api.DTOs.Habits;
 using HuachinDevHabit.Api.Entities;
+using HuachinDevHabit.Api.Extensions;
 using HuachinDevHabit.Api.Jobs;
 using HuachinDevHabit.Api.Middleware;
 using HuachinDevHabit.Api.Services;
@@ -22,6 +23,7 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Http.Resilience;
@@ -37,6 +39,7 @@ using Quartz;
 using Refit;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.RateLimiting;
 
 namespace HuachinDevHabit.Api;
 
@@ -346,6 +349,66 @@ public static class DependencyInjection
 					.WithOrigins(corsOptions.AllowedOrigins)
 					.AllowAnyHeader()
 					.AllowAnyMethod();
+			});
+		});
+
+		return builder;
+	}
+
+	public static WebApplicationBuilder AddRateLimiting(this WebApplicationBuilder builder)
+	{
+		builder.Services.AddRateLimiter(options =>
+		{			
+			options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+			options.OnRejected = async (context, token) =>
+			{
+				if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
+				{
+					context.HttpContext.Response.Headers.RetryAfter = $"{retryAfter.TotalSeconds}";
+
+					ProblemDetailsFactory problemDetailsFactory = context.HttpContext.RequestServices
+						.GetRequiredService<ProblemDetailsFactory>();
+
+					Microsoft.AspNetCore.Mvc.ProblemDetails problemDetails = problemDetailsFactory
+						.CreateProblemDetails(
+							context.HttpContext,
+							StatusCodes.Status429TooManyRequests,
+							"Too Many Requests",
+							detail: $"Too many requests. Please try again after {retryAfter.TotalSeconds} seconds"
+						);
+
+					await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, token);
+				}
+			};
+
+			options.AddPolicy("default", httpContext =>
+			{
+				//string userName = httpContext.User.Identity?.Name ?? string.Empty; // no autenticado
+				string userName = httpContext.User.GetIdentityId() ?? string.Empty; // autenticado
+
+				if (!string.IsNullOrEmpty(userName))
+				{
+					return RateLimitPartition.GetTokenBucketLimiter(
+						userName,
+						_ => new TokenBucketRateLimiterOptions
+						{
+							TokenLimit = 100,
+							QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+							QueueLimit = 5,
+							ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+							TokensPerPeriod = 25
+						});
+				}
+
+				return RateLimitPartition.GetFixedWindowLimiter(
+					"anonymous",
+					_ => new FixedWindowRateLimiterOptions
+					{
+						PermitLimit = 5,
+						Window = TimeSpan.FromMinutes(1),
+					});
+
 			});
 		});
 
