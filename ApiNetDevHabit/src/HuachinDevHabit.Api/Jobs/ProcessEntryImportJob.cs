@@ -6,7 +6,7 @@ using HuachinDevHabit.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 
-namespace DevHabit.Api.Jobs;
+namespace HuachinDevHabit.Api.Jobs;
 
 public sealed class ProcessEntryImportJob(
     ApplicationDbContext dbContext,

@@ -10,6 +10,11 @@ namespace HuachinDevHabit.Api.DTOs.Habits
 		public required FrequencyDto Frequency { get; init; }
 		public required TargetDto Target { get; init; }
 		public DateOnly? EndDate { get; init; }
-		public MilestoneDto? Milestone { get; init; }		
+		public CreateMilestoneDto? Milestone { get; init; }		
+	}
+
+	public sealed record CreateMilestoneDto
+	{
+		public required int Target { get; init; }
 	}
 }

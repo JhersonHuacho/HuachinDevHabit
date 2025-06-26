@@ -8,5 +8,6 @@
 		public string? Description { get; set; }
 		public DateTime CreatedAtUtc { get; set; }
 		public DateTime? UpdatedAtUtc { get; set; }
+		public static string NewId() => $"t_{Guid.NewGuid()}";
 	}
 }

@@ -11,6 +11,7 @@ namespace HuachinDevHabit.Api.DTOs.Habits
 		public required TargetDto Target { get; init; }
 		public DateOnly? EndDate { get; init; }
 		public UpdateMilestoneDto? Milestone { get; init; }
+		public AutomationSource? AutomationSource { get; init; }
 	}
 
 	public sealed class UpdateMilestoneDto

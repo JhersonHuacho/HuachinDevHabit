@@ -22,5 +22,6 @@
 		// Tags es una propiedad de omisión de navegación que se utiliza para la serialización y deserialización de datos.
 		public List<HabitTag> HabitTags { get; set; }
 		public List<Tag> Tags { get; set; }
+		public static string NewId() => $"h_{Guid.NewGuid()}";
 	}
 }

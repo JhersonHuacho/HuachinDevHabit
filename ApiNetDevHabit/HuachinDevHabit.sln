@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5187AB25-F1FF-4FB2-87C7-BCFEF146ECE3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HuachinDevHabit.UnitTests", "test\HuachinDevHabit.UnitTests\HuachinDevHabit.UnitTests.csproj", "{D23B048F-A52C-4268-8F69-BCB3B152BFE4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,12 +34,17 @@ Global
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D23B048F-A52C-4268-8F69-BCB3B152BFE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D23B048F-A52C-4268-8F69-BCB3B152BFE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D23B048F-A52C-4268-8F69-BCB3B152BFE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D23B048F-A52C-4268-8F69-BCB3B152BFE4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5ADE8899-E120-472A-B36D-76577D57936A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{D23B048F-A52C-4268-8F69-BCB3B152BFE4} = {5187AB25-F1FF-4FB2-87C7-BCFEF146ECE3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E5C9AD74-AF25-4868-B1F9-87209AA26806}
