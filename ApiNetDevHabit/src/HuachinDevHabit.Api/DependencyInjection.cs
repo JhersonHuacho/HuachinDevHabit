@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using DevHabit.Api.Jobs;
 using FluentValidation;
 using HuachinDevHabit.Api.Database;
 using HuachinDevHabit.Api.DTOs.Entries;
@@ -313,8 +314,9 @@ public static class DependencyInjection
 	{
 		builder.Services.AddQuartz(q =>
 		{
+			// GitHub Automation Scheduler Job
 			q.AddJob<GitHubAutomationSchedulerJob>(opts => opts.WithIdentity("github-automation-scheduler"));
-
+			
 			q.AddTrigger(opts => opts
 				.ForJob("github-automation-scheduler")
 				.WithIdentity("github-automation-scheduler-trigger")
@@ -327,8 +329,15 @@ public static class DependencyInjection
 					schedule.WithIntervalInMinutes(settings.ScanIntervalMinutes)
 						.RepeatForever();
 				}));
-		});
 
+			// Entry import cleanup job - runs daily at 3 AM UTC
+			q.AddJob<CleanupEntryImportJobsJob>(opts => opts.WithIdentity("cleanup-entry-imports"));
+
+			q.AddTrigger(opts => opts
+				.ForJob("cleanup-entry-imports")
+				.WithIdentity("cleanup-entry-imports-trigger")
+				.WithCronSchedule("0 0 3 * * ?", x => x.InTimeZone(TimeZoneInfo.Utc)));
+		});
 
 		builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 

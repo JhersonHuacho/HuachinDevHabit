@@ -17,6 +17,7 @@ public sealed class ApplicationDbContext : DbContext
 	public DbSet<User> Users { get; set; }
 	public DbSet<GitHubAccessToken> GitHubAccessTokens { get; set; }
 	public DbSet<Entry> Entries { get; set; }
+	public DbSet<EntryImportJob> EntryImportJobs { get; set; }
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{

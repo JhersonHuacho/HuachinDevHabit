@@ -5,6 +5,7 @@ using HuachinDevHabit.Api.Services.Authentication;
 using HuachinDevHabit.Api.Services.ContentNegotiation;
 using HuachinDevHabit.Api.Services.GitHub;
 using HuachinDevHabit.Api.Services.Hateos;
+using HuachinDevHabit.Api.Services.Refit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;

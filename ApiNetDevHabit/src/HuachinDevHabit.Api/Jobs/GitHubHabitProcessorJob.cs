@@ -2,6 +2,7 @@
 using HuachinDevHabit.Api.DTOs.GitHub;
 using HuachinDevHabit.Api.Entities;
 using HuachinDevHabit.Api.Services.GitHub;
+using HuachinDevHabit.Api.Services.Refit;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 

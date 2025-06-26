@@ -1,8 +1,7 @@
 ﻿using HuachinDevHabit.Api.DTOs.GitHub;
-using HuachinDevHabit.Api.Services.Refit;
 using Refit;
 
-namespace HuachinDevHabit.Api.Services.GitHub;
+namespace HuachinDevHabit.Api.Services.Refit;
 
 public sealed class RefitGitHubService
 {
